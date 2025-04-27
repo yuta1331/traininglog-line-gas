@@ -6,7 +6,7 @@ LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps S
 - TypeScript
 - Webpack + gas-webpack-plugin
 - Google Apps Script (clasp)
-- LINE Messaging API # comming soon
+- LINE Messaging API
 
 ## 📁 ディレクトリ構成
 
@@ -17,7 +17,7 @@ LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps S
 │   ├─┐ index.ts           # doPostエントリポイント
 │   └─┐ services/
 │       ├─┐ parse.ts       # 筋トレメッセージのパース
-│       ├─┐ reply.ts       # LINEへの返信処理、未実装
+│       ├─┐ reply.ts       # LINEへの返信処理
 │       └─┐ user.ts        # ユーザー認証処理
 ├─┐ dist/                  # ビルド後出力
 ├─┐ package.json
@@ -53,8 +53,6 @@ npm run deploy
 - 筋トレ記録メッセージパース＆登録
 - トップセット（最重量＆最多Rep）自動判定
 - メッセージフォーマットチェック
-
-## 🚧 実装予定
 - LINEへカジュアルな返信
 
 ## 📝 メッセージフォーマット例
