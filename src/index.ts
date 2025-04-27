@@ -3,6 +3,7 @@
 import { CONFIG } from './config';
 import { loadAllowedUserIds } from './services/user';
 import { isTrainingRecord, parseTrainingLog } from './services/parse';
+import { replyToUser } from './services/reply';
 
 /**
  * doPost is the HTTP POST endpoint for LINE Webhook.
@@ -30,6 +31,7 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
       if (event.type === 'message' && event.message.type === 'text') {
         const userId = event.source.userId;
         const messageText = event.message.text;
+        const replyToken = event.replyToken;
 
         if (!allowedUserIds.includes(userId)) {
           Logger.log(`Unauthorized user: ${userId}`);
@@ -38,18 +40,34 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
         }
 
         if (isTrainingRecord(messageText)) {
-          const records = parseTrainingLog(userId, messageText);
-          records.forEach(record => {
-            sheet.appendRow([
-              record.userId,
-              record.date,
-              record.shop,
-              record.event,
-              record.weight,
-              record.reps,
-              record.topSet ? 1 : ''
-            ]);
-          });
+          try {
+            const records = parseTrainingLog(userId, messageText);
+            records.forEach(record => {
+              sheet.appendRow([
+                record.userId,
+                record.date,
+                record.shop,
+                record.event,
+                record.weight,
+                record.reps,
+                record.topSet ? 1 : ''
+              ]);
+            });
+
+            // Reply when registration is successful
+            replyToUser(replyToken, '登録したよ！💪');
+
+          } catch (err) {
+            let errorMessage = 'フォーマット間違ってるよ！📝';
+            if (err instanceof Error) {
+              errorMessage += `-> ${err.message}`;
+            }
+            // Reply when format error occurs
+            replyToUser(replyToken, errorMessage);
+          }
+        } else {
+          // Do not reply for normal messages
+          Logger.log(`Normal message from ${userId} - no reply.`);
         }
       }
     });

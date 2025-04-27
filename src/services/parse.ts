@@ -51,10 +51,12 @@ export function parseTrainingLog(userId: string, message: string): TrainingRecor
 
     const sets = setsText.split(',').map(pair => {
       const [weightStr, repsStr] = pair.split(':');
-      return {
-        weight: parseFloat(weightStr),
-        reps: parseInt(repsStr, 10),
-      };
+      const weight = parseFloat(weightStr);
+      const reps = parseInt(repsStr, 10);
+      if (isNaN(weight) || isNaN(reps)) {
+        throw new Error('Invalid weight or reps format');
+      }
+      return { weight, reps };
     });
 
     let topSetIndex = 0;
