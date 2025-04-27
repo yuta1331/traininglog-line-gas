@@ -1,0 +1,18 @@
+{
+  "name": "line-training-log",
+  "version": "1.0.0",
+  "description": "A bot that saves workout records to a spreadsheet via LINE",
+  "scripts": {
+    "build": "webpack",
+    "deploy": "npm run build && clasp push"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.2",
+    "esbuild": "^0.19.12",
+    "gas-webpack-plugin": "^2.6.0",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "webpack": "^5.99.7",
+    "webpack-cli": "^6.0.1"
+  }
+}
