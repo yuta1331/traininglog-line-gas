@@ -21,7 +21,7 @@ export type TrainingRecord = {
  */
 export function isTrainingRecord(message: string): boolean {
   const firstLine = message.split('\n')[0].trim();
-  const regex = /^(\d{1,4})\/(\d{1,2})(?:\/(\d{1,2}))?\s.+$/;
+  const regex = /^(\d{1,4}\/)?(\d{1,2})\/(\d{1,2})\s+(.+)$/;
   return regex.test(firstLine);
 }
 
@@ -36,11 +36,21 @@ export function parseTrainingLog(userId: string, message: string): TrainingRecor
   const lines = message.trim().split('\n').map(line => line.trim());
   const [dateShopLine, ...workoutLines] = lines;
 
-  const dateShopMatch = dateShopLine.match(/^(\d{1,4})\/(\d{1,2})\s+(.+)$/);
-  if (!dateShopMatch) throw new Error('Invalid first line format');
+  const dateShopMatch = dateShopLine.match(/^(\d{1,4}\/)?(\d{1,2})\/(\d{1,2})\s+(.+)$/);
+  if (!dateShopMatch) {
+    throw new Error('Invalid first line format');
+  }
 
-  const [, month, day, shop] = dateShopMatch;
-  const year = new Date().getFullYear();
+  let year: number;
+  if (dateShopMatch[1]) {
+    year = parseInt(dateShopMatch[1].replace('/', ''), 10);
+  } else {
+    year = new Date().getFullYear();
+  }
+  const month = dateShopMatch[2];
+  const day = dateShopMatch[3];
+  const shop = dateShopMatch[4];
+
   const date = new Date(`${year}/${month}/${day}`);
 
   const records: TrainingRecord[] = [];
