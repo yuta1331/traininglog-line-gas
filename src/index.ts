@@ -3,6 +3,7 @@
 import { CONFIG } from './config';
 import { loadAllowedUserIds } from './services/user';
 import { isTrainingRecord, parseTrainingLog } from './services/parse';
+import { loadTrainingRecords, convertRecordsToJson, saveJsonToDrive } from './services/export';
 import { replyToUser } from './services/reply';
 
 /**
@@ -39,6 +40,27 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
           return;
         }
 
+        // (1) Handle "json書き出し" command
+        if (messageText === 'json書き出し') {
+          try {
+            const records = loadTrainingRecords();
+            const jsonData = convertRecordsToJson(records);
+            const fileUrl = saveJsonToDrive(jsonData);
+
+            replyToUser(replyToken, `✅ Jsonファイルを作成しました！\nこちらからダウンロードできます👇\n${fileUrl}`);
+          } catch (error) {
+            if (error instanceof Error) {
+              Logger.log(`Error during JSON export: ${error.message}`);
+              replyToUser(replyToken, `❌ エクスポート失敗: ${error.message}`);
+            } else {
+              Logger.log('Unknown error during JSON export');
+              replyToUser(replyToken, '❌ エクスポート失敗: Unknown error');
+            }
+          }
+          return;
+        }
+
+        // (2) Handle training record messages
         if (isTrainingRecord(messageText)) {
           try {
             const records = parseTrainingLog(userId, messageText);
