@@ -38,6 +38,41 @@ LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps S
 └─┐ .clasp.json            # GAS連携設定
 ```
 
+## .gitignoreしてるけど重要なファイル
+個人情報を含むため.gitignoreしていますが、以下については設定が必要です。
+
+.clasp.json
+``` json
+{
+  "scriptId": "GASデプロイ先",
+  "rootDir": "dist",
+  "scriptExtensions": [
+    ".js",
+    ".gs"
+  ],
+  "htmlExtensions": [
+    ".html"
+  ],
+  "jsonExtensions": [
+    ".json"
+  ],
+  "filePushOrder": [],
+  "skipSubdirectories": true
+}
+```
+
+src/config.ts
+``` TypeScript
+export const CONFIG = {
+  SPREADSHEET_ID: '筋トレ記録スプレッドシートID',
+  SHEET_NAME_LOG: 'TrainingLog',
+  SHEET_NAME_USERS: 'User',
+  JSON_FOLDER_ID: 'json格納するGoogleドライブのフォルダID',
+  JSON_FILE_NAME: 'training_log.json',
+  LINE_CHANNEL_ACCESS_TOKEN: 'LINE返信時に使用するトークン',
+};
+```
+
 ## 🛠 セットアップ手順
 
 1. **依存インストール**
