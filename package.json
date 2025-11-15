@@ -7,6 +7,7 @@
     "deploy": "npm run build && clasp push"
   },
   "devDependencies": {
+    "@types/google-apps-script": "^2.0.7",
     "@types/node": "^22.15.2",
     "esbuild": "^0.19.12",
     "gas-webpack-plugin": "^2.6.0",
