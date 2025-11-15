@@ -78,8 +78,17 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
             ]);
             
             if (rows.length > 0) {
-              const lastRow = sheet.getLastRow();
-              sheet.getRange(lastRow + 1, 1, rows.length, COLUMN_COUNT).setValues(rows);
+              // LockServiceを使用して同時実行時の競合を防止
+              const lock = LockService.getScriptLock();
+              try {
+                // 30秒間ロックを取得を試みる
+                lock.waitLock(30000);
+                const lastRow = sheet.getLastRow();
+                sheet.getRange(lastRow + 1, 1, rows.length, COLUMN_COUNT).setValues(rows);
+              } finally {
+                // ロックを必ず解放
+                lock.releaseLock();
+              }
             }
 
             // 登録成功時の返信
