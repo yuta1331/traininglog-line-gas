@@ -1,4 +1,13 @@
-.clasp.json
-package-lock.json
+# ビルド成果物
 dist/
+
+# 依存パッケージ
 node_modules/
+
+# clasp ローカル設定（グローバルな認証情報など）
+.clasp.json
+
+# OSエディタ系
+.DS_Store
+.idea/
+.vscode/
