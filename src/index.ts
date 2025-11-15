@@ -22,11 +22,6 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
         .setMimeType(ContentService.MimeType.JSON);
     }
 
-    const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEET_NAME_LOG);
-    if (!sheet) {
-      throw new Error(`Sheet ${CONFIG.SHEET_NAME_LOG} not found.`);
-    }
-
     const allowedUserIds = loadAllowedUserIds();
     events.forEach((event: any) => {
       if (event.type === 'message' && event.message.type === 'text') {
@@ -63,18 +58,29 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
         // (2) トレーニング記録メッセージの処理
         if (isTrainingRecord(messageText)) {
           try {
+            const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEET_NAME_LOG);
+            if (!sheet) {
+              throw new Error(`Sheet ${CONFIG.SHEET_NAME_LOG} not found.`);
+            }
+
             const records = parseTrainingLog(userId, messageText);
-            records.forEach(record => {
-              sheet.appendRow([
-                record.userId,
-                record.date,
-                record.shop,
-                record.event,
-                record.weight,
-                record.reps,
-                record.topSet ? 1 : ''
-              ]);
-            });
+            
+            // 複数行をまとめて追加（パフォーマンス改善）
+            const COLUMN_COUNT = 7; // userId, date, shop, event, weight, reps, topSet
+            const rows = records.map(record => [
+              record.userId,
+              record.date,
+              record.shop,
+              record.event,
+              record.weight,
+              record.reps,
+              record.topSet ? 1 : ''
+            ]);
+            
+            if (rows.length > 0) {
+              const lastRow = sheet.getLastRow();
+              sheet.getRange(lastRow + 1, 1, rows.length, COLUMN_COUNT).setValues(rows);
+            }
 
             // 登録成功時の返信
             replyToUser(replyToken, '登録したよ！💪');
