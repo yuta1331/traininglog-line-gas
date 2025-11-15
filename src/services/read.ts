@@ -1,11 +1,11 @@
-// TypeScript: Service for reading training records from spreadsheet
+// TypeScript: スプレッドシートからトレーニング記録を読み込むサービス
 
 import { CONFIG } from '../config';
 import { TrainingLogRow } from './export';
 
 /**
- * Read training records from the spreadsheet.
- * @returns Array of TrainingLogRow objects
+ * スプレッドシートからトレーニング記録を読み込みます
+ * @returns TrainingLogRowオブジェクトの配列
  */
 export function readTrainingRecords(): TrainingLogRow[] {
   const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEET_NAME_LOG);
@@ -19,7 +19,7 @@ export function readTrainingRecords(): TrainingLogRow[] {
   values.forEach(row => {
     const [userId, date, shop, event, weight, reps, topSet] = row;
 
-    // Skip rows with missing essential fields
+    // 必須フィールドが欠けている行をスキップ
     if (userId && date && shop && event && weight != null && reps != null) {
       records.push({
         userId: String(userId),

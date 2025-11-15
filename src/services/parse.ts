@@ -1,7 +1,7 @@
-// TypeScript: Service for parsing and processing training log messages
+// TypeScript: トレーニングログメッセージのパースと処理を行うサービス
 
 /**
- * Data structure representing a single training record.
+ * 単一のトレーニング記録を表すデータ構造
  */
 export type TrainingRecord = {
   userId: string;
@@ -15,9 +15,9 @@ export type TrainingRecord = {
 
 
 /**
- * Check if a given message follows the expected training record format.
- * @param message The text message from LINE
- * @returns True if the message is a training record, false otherwise
+ * 指定されたメッセージが期待されるトレーニング記録フォーマットに従っているかチェックします
+ * @param message LINEからのテキストメッセージ
+ * @returns メッセージがトレーニング記録の場合はtrue、そうでない場合はfalse
  */
 export function isTrainingRecord(message: string): boolean {
   const firstLine = message.split('\n')[0].trim();
@@ -27,10 +27,10 @@ export function isTrainingRecord(message: string): boolean {
 
 
 /**
- * Parse a training log message into a structured list of records.
- * @param userId The LINE user ID
- * @param message The raw training log text
- * @returns An array of structured TrainingRecord objects
+ * トレーニングログメッセージを構造化された記録のリストにパースします
+ * @param userId LINE ユーザーID
+ * @param message 生のトレーニングログテキスト
+ * @returns 構造化されたTrainingRecordオブジェクトの配列
  */
 export function parseTrainingLog(userId: string, message: string): TrainingRecord[] {
   const lines = message.trim().split('\n').map(line => line.trim());

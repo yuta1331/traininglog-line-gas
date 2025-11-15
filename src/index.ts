@@ -1,4 +1,4 @@
-// TypeScript: Main entry point for handling LINE Webhook in Google Apps Script
+// TypeScript: Google Apps ScriptでLINE Webhookを処理するメインエントリーポイント
 
 import { CONFIG } from './config';
 import { loadAllowedUserIds } from './services/user';
@@ -7,13 +7,13 @@ import { loadTrainingRecords, convertRecordsToJson, saveJsonToDrive } from './se
 import { replyToUser } from './services/reply';
 
 /**
- * doPost is the HTTP POST endpoint for LINE Webhook.
- * @param e Event object containing the POST request
- * @returns TextOutput indicating success or failure
+ * doPostはLINE WebhookのHTTP POSTエンドポイントです
+ * @param e POSTリクエストを含むイベントオブジェクト
+ * @returns 成功または失敗を示すTextOutput
  */
 function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput {
   try {
-    // Parse the POST body into JSON
+    // POSTボディをJSONにパース
     const json = JSON.parse(e.postData.contents);
 
     const events: any[] = json.events;
@@ -36,11 +36,11 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
 
         if (!allowedUserIds.includes(userId)) {
           Logger.log(`Unauthorized user: ${userId}`);
-          // Optional: You could reply to user here if you want
+          // 必要に応じて、ここでユーザーに返信することもできます
           return;
         }
 
-        // (1) Handle "json書き出し" command
+        // (1) "json書き出し"コマンドの処理
         if (messageText === 'json書き出し') {
           try {
             const records = loadTrainingRecords();
@@ -60,7 +60,7 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
           return;
         }
 
-        // (2) Handle training record messages
+        // (2) トレーニング記録メッセージの処理
         if (isTrainingRecord(messageText)) {
           try {
             const records = parseTrainingLog(userId, messageText);
@@ -76,7 +76,7 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
               ]);
             });
 
-            // Reply when registration is successful
+            // 登録成功時の返信
             replyToUser(replyToken, '登録したよ！💪');
 
           } catch (err) {
@@ -84,17 +84,17 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
             if (err instanceof Error) {
               errorMessage += `-> ${err.message}`;
             }
-            // Reply when format error occurs
+            // フォーマットエラー発生時の返信
             replyToUser(replyToken, errorMessage);
           }
         } else {
-          // Do not reply for normal messages
+          // 通常のメッセージには返信しない
           Logger.log(`Normal message from ${userId} - no reply.`);
         }
       }
     });
 
-    // Return a successful response
+    // 成功レスポンスを返す
     return ContentService.createTextOutput(JSON.stringify({ status: 'ok' }))
       .setMimeType(ContentService.MimeType.JSON);
 
@@ -111,5 +111,5 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
   }
 }
 
-// Expose doPost globally for Google Apps Script
+// Google Apps ScriptのグローバルスコープにdoPostを公開
 (globalThis as any).doPost = doPost;
