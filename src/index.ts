@@ -66,7 +66,7 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
             const records = parseTrainingLog(userId, messageText);
             
             // 複数行をまとめて追加（パフォーマンス改善）
-            const COLUMN_COUNT = 7; // userId, date, shop, event, weight, reps, topSet
+            // userId, date, shop, event, weight, reps, topSet
             const rows = records.map(record => [
               record.userId,
               record.date,
@@ -79,7 +79,7 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
             
             if (rows.length > 0) {
               const lastRow = sheet.getLastRow();
-              sheet.getRange(lastRow + 1, 1, rows.length, COLUMN_COUNT).setValues(rows);
+              sheet.getRange(lastRow + 1, 1, rows.length, rows[0].length).setValues(rows);
             }
 
             // 登録成功時の返信
