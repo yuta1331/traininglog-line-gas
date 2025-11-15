@@ -1,11 +1,11 @@
-// Service for replying to LINE users
+// LINEユーザーへの返信を行うサービス
 
 import { CONFIG } from '../config';
 
 /**
- * Reply to a LINE user.
- * @param replyToken The token from the incoming event
- * @param message The message text to send back
+ * LINEユーザーに返信します
+ * @param replyToken 受信イベントからのトークン
+ * @param message 送信するメッセージテキスト
  */
 export function replyToUser(replyToken: string, message: string): void {
   const url = 'https://api.line.me/v2/bot/message/reply';

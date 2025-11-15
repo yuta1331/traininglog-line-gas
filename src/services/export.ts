@@ -1,4 +1,4 @@
-// TypeScript: Service for exporting json
+// TypeScript: JSONエクスポートのためのサービス
 
 import { CONFIG } from '../config';
 
@@ -14,8 +14,8 @@ export type TrainingLogRow = {
 
 
 /**
- * Load training records from the Spreadsheet.
- * @returns {TrainingLogRow[]} Array of training log records
+ * スプレッドシートからトレーニング記録を読み込みます
+ * @returns {TrainingLogRow[]} トレーニングログ記録の配列
  */
 export function loadTrainingRecords(): TrainingLogRow[] {
   const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEET_NAME_LOG);
@@ -25,7 +25,7 @@ export function loadTrainingRecords(): TrainingLogRow[] {
 
   const values = sheet.getDataRange().getValues();
   if (values.length <= 1) {
-    // Only header exists
+    // ヘッダーのみ存在する場合
     return [];
   }
 
@@ -46,12 +46,12 @@ export function loadTrainingRecords(): TrainingLogRow[] {
 
 
 /**
- * Convert flat training records into structured JSON format.
- * @param records Array of TrainingLogRow
- * @returns JSON-ready array
+ * フラットなトレーニング記録を構造化されたJSON形式に変換します
+ * @param records TrainingLogRowの配列
+ * @returns JSON形式の配列
  */
 export function convertRecordsToJson(records: TrainingLogRow[]): any[] {
-  // Map to group by date + shop
+  // 日付+店舗でグループ化するためのマップ
   const grouped: Record<string, { date: string; location: string; exercises: Record<string, { name: string; sets: { weight: number; reps: number; topSetFlag: number; }[] }> }> = {};
 
   records.forEach(record => {
@@ -80,7 +80,7 @@ export function convertRecordsToJson(records: TrainingLogRow[]): any[] {
     });
   });
 
-  // Flatten into final array
+  // 最終的な配列に平坦化
   return Object.values(grouped).map(entry => ({
     date: entry.date,
     location: entry.location,
@@ -90,23 +90,23 @@ export function convertRecordsToJson(records: TrainingLogRow[]): any[] {
 
 
 /**
- * Save JSON data to Google Drive as a file.
- * - If a file with the same name exists in the folder, it will be replaced.
- * - The file will be set to "Anyone with the link" can view.
- * @param jsonData - The JSON object to save
- * @returns The sharable URL to the saved file
+ * JSONデータをファイルとしてGoogle Driveに保存します
+ * - フォルダに同名のファイルが存在する場合は置き換えられます
+ * - ファイルは「リンクを知っている全員」が閲覧可能に設定されます
+ * @param jsonData - 保存するJSONオブジェクト
+ * @returns 保存されたファイルの共有可能なURL
  */
 export function saveJsonToDrive(jsonData: any): string {
   const folder = DriveApp.getFolderById(CONFIG.JSON_FOLDER_ID);
 
-  // Delete existing file if exists
+  // 既存ファイルが存在する場合は削除
   const files = folder.getFilesByName(CONFIG.JSON_FILE_NAME);
   while (files.hasNext()) {
     const file = files.next();
     file.setTrashed(true);
   }
 
-  // Create new file
+  // 新しいファイルを作成
   const blob = Utilities.newBlob(
     JSON.stringify(jsonData, null, 2),
     'application/json',
@@ -114,7 +114,7 @@ export function saveJsonToDrive(jsonData: any): string {
   );
   const file = folder.createFile(blob);
 
-  // Set permissions: Anyone with the link can view
+  // 権限設定: リンクを知っている全員が閲覧可能
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
   return file.getUrl();
