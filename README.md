@@ -2,6 +2,16 @@
 
 LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps Script (GAS) Botです！
 
+## 🏗 実装済み機能
+
+- LINEからのメッセージ受信
+- 指定ユーザーのみ許可（スプレッドシートにリスト管理）
+- 筋トレ記録メッセージパース＆登録
+- トップセット（最重量＆最多Rep）自動判定
+- メッセージフォーマットチェック
+- LINEへカジュアルな返信
+- 筋トレ記録のJSON書き出し対応
+
 ## 📦 構成
 - TypeScript
 - Webpack + gas-webpack-plugin
@@ -18,12 +28,49 @@ LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps S
 │   └─┐ services/
 │       ├─┐ parse.ts       # 筋トレメッセージのパース
 │       ├─┐ reply.ts       # LINEへの返信処理
-│       └─┐ user.ts        # ユーザー認証処理
+│       ├─┐ user.ts        # ユーザー認証処理
+│       ├─┐ read.ts        # スプレッドシート読取専用処理
+│       └─┐ export.ts      # JSON書き出し処理
 ├─┐ dist/                  # ビルド後出力
 ├─┐ package.json
 ├─┐ tsconfig.json
 ├─┐ webpack.config.js
 └─┐ .clasp.json            # GAS連携設定
+```
+
+## .gitignoreしてるけど重要なファイル
+個人情報を含むため.gitignoreしていますが、以下については設定が必要です。
+
+.clasp.json
+``` json
+{
+  "scriptId": "GASデプロイ先",
+  "rootDir": "dist",
+  "scriptExtensions": [
+    ".js",
+    ".gs"
+  ],
+  "htmlExtensions": [
+    ".html"
+  ],
+  "jsonExtensions": [
+    ".json"
+  ],
+  "filePushOrder": [],
+  "skipSubdirectories": true
+}
+```
+
+src/config.ts
+``` TypeScript
+export const CONFIG = {
+  SPREADSHEET_ID: '筋トレ記録スプレッドシートID',
+  SHEET_NAME_LOG: 'TrainingLog',
+  SHEET_NAME_USERS: 'User',
+  JSON_FOLDER_ID: 'json格納するGoogleドライブのフォルダID',
+  JSON_FILE_NAME: 'training_log.json',
+  LINE_CHANNEL_ACCESS_TOKEN: 'LINE返信時に使用するトークン',
+};
 ```
 
 ## 🛠 セットアップ手順
@@ -64,19 +111,12 @@ npm run build
 npm run deploy
 ```
 
-## 🏗 実装済み機能
-
-- LINEからのメッセージ受信
-- 指定ユーザーのみ許可（スプレッドシートにリスト管理）
-- 筋トレ記録メッセージパース＆登録
-- トップセット（最重量＆最多Rep）自動判定
-- メッセージフォーマットチェック
-- LINEへカジュアルな返信
+---
 
 ## 📝 メッセージフォーマット例
 
 ```
-4/26 処店
+4/26 A店
 dワンハンドロウ 24:12,24:10,24:8,22:8
 mシーテッドロウアンダー 59:9,56:9,54:10
 m懇垂 0:8,5:9,9:8
@@ -99,6 +139,38 @@ dハンマーカール 10:7,9:6,7:7
 | 6  | 回数        | Rep数                        |
 | 7  | トップセット | 最重量＆最多Repなら「1」 |
 
+## 📤 JSON書き出し機能
+LINEで json書き出し とメッセージを送ると、スプレッドシートの記録をJSON形式で出力し、Googleドライブに保存されたファイルのリンクが返信されます。
+
+🔁 フロー
+1. 許可ユーザーが json書き出し と送信
+2. GASがスプレッドシートのデータを読み込む
+3. トレーニング日・店舗・種目ごとに整理されたJSONを生成
+4. Googleドライブ上にJSONファイルを保存（同名ファイルは置き換え）
+5. ダウンロードリンクをLINEで返信
+
+🗂 JSON構造例
+``` json
+[
+  {
+    "date": "2025-04-26",
+    "location": "A店",
+    "exercises": [
+      {
+        "name": "dワンハンドロウ",
+        "sets": [
+          { "weight": 24, "reps": 12, "topSetFlag": 1 },
+          { "weight": 24, "reps": 10, "topSetFlag": 0 },
+          { "weight": 24, "reps": 8, "topSetFlag": 0 },
+          { "weight": 22, "reps": 8, "topSetFlag": 0 }
+        ]
+      }
+    ]
+  }
+]
+```
+※ トップセットは最重量＆最多Repのセットに "topSetFlag": 1 が付きます。
+
 ---
 
 ## 🔑 注意事項
@@ -109,5 +181,3 @@ dハンマーカール 10:7,9:6,7:7
 ---
 
 # 🏋️️‍♂️ Let's keep training and logging!!
-
-
