@@ -13,7 +13,7 @@ LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps S
 ```
 .
 ├─┐ src/
-│   ├─┐ config.ts          # 各種設定値
+│   ├─┐ config.ts          # スクリプトプロパティ取得ヘルパー
 │   ├─┐ index.ts           # doPostエントリポイント
 │   └─┐ services/
 │       ├─┐ parse.ts       # 筋トレメッセージのパース
@@ -34,13 +34,31 @@ LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps S
 npm install
 ```
 
-2. **ビルド**
+2. **スクリプトプロパティの設定**
+
+Google Apps Scriptのスクリプトエディタで、以下の手順でスクリプトプロパティを設定してください：
+
+a. Apps Scriptエディタを開く
+b. 左メニューの「プロジェクトの設定」（⚙️アイコン）をクリック
+c. 「スクリプトプロパティ」セクションで「スクリプト プロパティを追加」をクリック
+d. 以下の6つのプロパティを設定：
+
+| プロパティ名 | 説明 | 例 |
+|:------------|:-----|:---|
+| `SPREADSHEET_ID` | スプレッドシートのID | `1a2b3c4d5e6f...` |
+| `SHEET_NAME_LOG` | トレーニングログシート名 | `TrainingLog` |
+| `SHEET_NAME_USERS` | 許可ユーザーリストシート名 | `UserList` |
+| `JSON_FOLDER_ID` | JSON出力先のGoogleドライブフォルダID | `1x2y3z4a5b6c...` |
+| `JSON_FILE_NAME` | 出力するJSONファイル名 | `training_data.json` |
+| `LINE_CHANNEL_ACCESS_TOKEN` | LINEチャネルアクセストークン | `your_channel_access_token` |
+
+3. **ビルド**
 
 ```bash
 npm run build
 ```
 
-3. **GASへデプロイ**
+4. **GASへデプロイ**
 
 ```bash
 npm run deploy
@@ -85,7 +103,8 @@ dハンマーカール 10:7,9:6,7:7
 
 ## 🔑 注意事項
 - `.clasp.json`の`rootDir`は`dist`になっています
-- LINEのチャネルアクセストークンは`src/config.ts`に設定してください
+- 設定値はすべてGoogle Apps Scriptのスクリプトプロパティで管理します
+- スクリプトプロパティの設定方法は上記「セットアップ手順」を参照してください
 
 ---
 
