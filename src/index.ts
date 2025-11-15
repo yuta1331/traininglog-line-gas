@@ -66,7 +66,7 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
             const records = parseTrainingLog(userId, messageText);
             
             // 複数行をまとめて追加（パフォーマンス改善）
-            const COLUMN_COUNT = 7; // userId, date, shop, event, weight, reps, topSet
+            // userId, date, shop, event, weight, reps, topSet
             const rows = records.map(record => [
               record.userId,
               record.date,
@@ -81,10 +81,10 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
               // LockServiceを使用して同時実行時の競合を防止
               const lock = LockService.getScriptLock();
               try {
-                // 30秒間ロックを取得を試みる
+                // 30秒間ロックの取得を試みる
                 lock.waitLock(30000);
                 const lastRow = sheet.getLastRow();
-                sheet.getRange(lastRow + 1, 1, rows.length, COLUMN_COUNT).setValues(rows);
+                sheet.getRange(lastRow + 1, 1, rows.length, rows[0].length).setValues(rows);
               } finally {
                 // ロックを必ず解放
                 lock.releaseLock();
