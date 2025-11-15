@@ -64,17 +64,22 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
         if (isTrainingRecord(messageText)) {
           try {
             const records = parseTrainingLog(userId, messageText);
-            records.forEach(record => {
-              sheet.appendRow([
-                record.userId,
-                record.date,
-                record.shop,
-                record.event,
-                record.weight,
-                record.reps,
-                record.topSet ? 1 : ''
-              ]);
-            });
+            
+            // 複数行をまとめて追加（パフォーマンス改善）
+            const rows = records.map(record => [
+              record.userId,
+              record.date,
+              record.shop,
+              record.event,
+              record.weight,
+              record.reps,
+              record.topSet ? 1 : ''
+            ]);
+            
+            if (rows.length > 0) {
+              const lastRow = sheet.getLastRow();
+              sheet.getRange(lastRow + 1, 1, rows.length, rows[0].length).setValues(rows);
+            }
 
             // 登録成功時の返信
             replyToUser(replyToken, '登録したよ！💪');
