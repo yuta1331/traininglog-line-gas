@@ -78,8 +78,21 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
             ]);
             
             if (rows.length > 0) {
-              const lastRow = sheet.getLastRow();
-              sheet.getRange(lastRow + 1, 1, rows.length, rows[0].length).setValues(rows);
+              // LockServiceを使用して同時実行時の競合を防止
+              const lock = LockService.getScriptLock();
+              try {
+                lock.waitLock(30000);
+              } catch (e) {
+                Logger.log(`Failed to acquire lock: ${e}`);
+                replyToUser(replyToken, '⏱️ 処理が混み合っています。しばらく待ってから再度お試しください。');
+                return;
+              }
+              try {
+                const lastRow = sheet.getLastRow();
+                sheet.getRange(lastRow + 1, 1, rows.length, rows[0].length).setValues(rows);
+              } finally {
+                lock.releaseLock();
+              }
             }
 
             // 登録成功時の返信
