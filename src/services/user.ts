@@ -1,10 +1,10 @@
-// TypeScript: Service to manage user authorization for Google Apps Script
+// TypeScript: Google Apps Scriptのユーザー認証を管理するサービス
 
 import { CONFIG } from '../config';
 
 /**
- * Load allowed user IDs from the UserList sheet.
- * @returns List of authorized user IDs
+ * UserListシートから許可されたユーザーIDを読み込みます
+ * @returns 認証されたユーザーIDのリスト
  */
 export function loadAllowedUserIds(): string[] {
   const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEET_NAME_USERS);
