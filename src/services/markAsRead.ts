@@ -33,17 +33,9 @@ export function markMessageAsRead(markAsReadToken: string | undefined): void {
     const response = UrlFetchApp.fetch(url, options);
     const statusCode = response.getResponseCode();
 
-    if (statusCode === 200) {
-      Logger.log('Message marked as read successfully.');
-    } else {
-      const errorBody = response.getContentText();
-      Logger.log(`Failed to mark message as read. Status: ${statusCode}, Response: ${errorBody}`);
-    }
+    const responseBody = response.getContentText();
+    Logger.log(`markMessageAsRead response: Status: ${statusCode}, Body: ${responseBody}`);
   } catch (error) {
-    if (error instanceof Error) {
-      Logger.log(`Error marking message as read: ${error.message}`);
-    } else {
-      Logger.log('Unknown error occurred while marking message as read.');
-    }
+    Logger.log(`markMessageAsRead error: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
