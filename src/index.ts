@@ -5,6 +5,7 @@ import { loadAllowedUserIds } from './services/user';
 import { isTrainingRecord, parseTrainingLog } from './services/parse';
 import { loadTrainingRecords, convertRecordsToJson, saveJsonToDrive } from './services/export';
 import { replyToUser } from './services/reply';
+import { markMessageAsRead } from './services/markAsRead';
 
 /**
  * doPostはLINE WebhookのHTTP POSTエンドポイントです
@@ -28,6 +29,10 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
         const userId = event.source.userId;
         const messageText = event.message.text;
         const replyToken = event.replyToken;
+        const markAsReadToken = event.markAsReadToken;
+
+        // メッセージを既読にする（ChatモードがONの場合のみmarkAsReadTokenが提供される）
+        markMessageAsRead(markAsReadToken);
 
         if (!allowedUserIds.includes(userId)) {
           Logger.log(`Unauthorized user: ${userId}`);
