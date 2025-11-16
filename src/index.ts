@@ -29,7 +29,7 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
         const userId = event.source.userId;
         const messageText = event.message.text;
         const replyToken = event.replyToken;
-        const markAsReadToken = event.markAsReadToken;
+        const markAsReadToken = event.message.markAsReadToken;
 
         // メッセージを既読にする（ChatモードがONの場合のみmarkAsReadTokenが提供される）
         markMessageAsRead(markAsReadToken);
