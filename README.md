@@ -11,6 +11,7 @@ LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps S
 - メッセージフォーマットチェック
 - LINEへカジュアルな返信
 - 筋トレ記録のJSON書き出し対応
+- 受信メッセージの自動既読（Chatモード ON 時のみ）
 
 ## 📦 構成
 - TypeScript
@@ -23,6 +24,7 @@ LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps S
 ```
 .
 ├─┐ src/
+│   ├─┐ appsscript.json    # GASマニフェスト（ビルド時にdist/へコピー）
 │   ├─┐ config.ts          # スクリプトプロパティ取得ヘルパー
 │   ├─┐ index.ts           # doPostエントリポイント
 │   └─┐ services/
@@ -30,48 +32,25 @@ LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps S
 │       ├─┐ reply.ts       # LINEへの返信処理
 │       ├─┐ user.ts        # ユーザー認証処理
 │       ├─┐ read.ts        # スプレッドシート読取専用処理
-│       └─┐ export.ts      # JSON書き出し処理
-├─┐ dist/                  # ビルド後出力
+│       ├─┐ export.ts      # JSON書き出し処理
+│       └─┐ markAsRead.ts  # 受信メッセージの自動既読処理
+├─┐ dist/                  # ビルド後出力（.gitignore対象）
 ├─┐ package.json
 ├─┐ tsconfig.json
 ├─┐ webpack.config.js
-└─┐ .clasp.json            # GAS連携設定
+├─┐ .clasp.json.template   # GAS連携設定のひな形（Git管理）
+└─┐ .clasp.json            # GAS連携設定（.gitignore対象・各自で作成）
 ```
 
-## .gitignoreしてるけど重要なファイル
-個人情報を含むため.gitignoreしていますが、以下については設定が必要です。
+## .gitignoreしているファイル
 
-.clasp.json
-``` json
-{
-  "scriptId": "GASデプロイ先",
-  "rootDir": "dist",
-  "scriptExtensions": [
-    ".js",
-    ".gs"
-  ],
-  "htmlExtensions": [
-    ".html"
-  ],
-  "jsonExtensions": [
-    ".json"
-  ],
-  "filePushOrder": [],
-  "skipSubdirectories": true
-}
-```
+| ファイル | 対応 |
+|:--|:--|
+| `.clasp.json` | デプロイ先のスクリプトIDを含むため除外。`.clasp.json.template` をコピーして作成します（手順は下記） |
+| `dist/` | ビルド成果物。`npm run build` で生成されます |
+| `node_modules/` | `npm install` で生成されます |
 
-src/config.ts
-``` TypeScript
-export const CONFIG = {
-  SPREADSHEET_ID: '筋トレ記録スプレッドシートID',
-  SHEET_NAME_LOG: 'TrainingLog',
-  SHEET_NAME_USERS: 'User',
-  JSON_FOLDER_ID: 'json格納するGoogleドライブのフォルダID',
-  JSON_FILE_NAME: 'training_log.json',
-  LINE_CHANNEL_ACCESS_TOKEN: 'LINE返信時に使用するトークン',
-};
-```
+設定値（スプレッドシートIDやLINEチャネルアクセストークン）は**リポジトリ内のファイルではなく、GASのスクリプトプロパティで管理**します。`src/config.ts` はスクリプトプロパティを読み出すヘルパーで、機密情報を含まないためGit管理下にあります。
 
 ## 🛠 セットアップ手順
 
@@ -81,7 +60,33 @@ export const CONFIG = {
 npm install
 ```
 
-2. **スクリプトプロパティの設定**
+claspはグローバルインストールが必要です（`devDependencies`には含まれていません）。
+
+```bash
+npm install -g @google/clasp
+```
+
+2. **Apps Script APIの有効化**
+
+https://script.google.com/home/usersettings で「Google Apps Script API」をONにします。OFFのままだと`clasp push`が失敗します。
+
+3. **claspへログイン**
+
+```bash
+clasp login
+```
+
+ブラウザが開くので、GASプロジェクトを所有しているGoogleアカウントで認証します。認証情報は`~/.clasprc.json`に保存されます。
+
+4. **`.clasp.json`の作成**
+
+```bash
+cp .clasp.json.template .clasp.json
+```
+
+コピーしたら`scriptId`を自分のGASプロジェクトのIDに書き換えます。IDはApps Scriptエディタの「プロジェクトの設定」→「スクリプト ID」から取得できます。
+
+5. **スクリプトプロパティの設定**
 
 Google Apps Scriptのスクリプトエディタで、以下の手順でスクリプトプロパティを設定してください：
 
@@ -99,17 +104,27 @@ d. 以下の6つのプロパティを設定：
 | `JSON_FILE_NAME` | 出力するJSONファイル名 | `training_data.json` |
 | `LINE_CHANNEL_ACCESS_TOKEN` | LINEチャネルアクセストークン | `your_channel_access_token` |
 
-3. **ビルド**
+6. **ビルド**
 
 ```bash
 npm run build
 ```
 
-4. **GASへデプロイ**
+`src/`のTypeScriptを`dist/index.js`にバンドルし、あわせて`src/appsscript.json`（GASマニフェスト）を`dist/`へコピーします。clasp はマニフェストが無いとpushできないため、このコピーはビルドに組み込んでいます。
+
+7. **GASへコードを反映**
 
 ```bash
 npm run deploy
 ```
+
+8. **ウェブアプリのデプロイ（手動）**
+
+⚠️ `npm run deploy` は `clasp push` までで、**ウェブアプリのデプロイ版は更新されません**。バージョン固定でデプロイしている場合、pushしただけでは古いコードが配信され続けます。
+
+Apps Scriptエディタで「デプロイ」→「デプロイを管理」から対象のデプロイを編集し、バージョンを「新バージョン」にして更新してください。既存のデプロイを更新すればウェブアプリURLは変わらないため、LINE側のWebhook URL再登録は不要です。
+
+新規にデプロイを作成するとURLが変わり、LINE DevelopersコンソールのWebhook URLも更新が必要になる点に注意してください。
 
 ---
 
@@ -119,13 +134,13 @@ npm run deploy
 4/26 A店
 dワンハンドロウ 24:12,24:10,24:8,22:8
 mシーテッドロウアンダー 59:9,56:9,54:10
-m懇垂 0:8,5:9,9:8
+m懸垂 0:8,5:9,9:8
 mリアデルト 36:10,34:10,34:8
 dハンマーカール 10:7,9:6,7:7
 ```
 
 （1行目は日付＋店舗名必須）
-（种目ごとに「重量: 回数」をカンマ区切りで記述）
+（種目ごとに「重量: 回数」をカンマ区切りで記述）
 
 ## 📂 スプレッドシートカラム構成
 
@@ -173,10 +188,42 @@ LINEで json書き出し とメッセージを送ると、スプレッドシー�
 
 ---
 
+## 👀 自動既読機能
+許可ユーザーからメッセージを受信すると、[メッセージ既読API](https://developers.line.biz/ja/docs/messaging-api/mark-as-read/)を呼び出して自動的に既読を付けます。
+
+🔁 フロー
+1. Webhookイベントの `events[].message.markAsReadToken` を取得
+2. 許可ユーザーであることを確認
+3. `POST https://api.line.me/v2/bot/chat/markAsRead` にトークンを送信して既読化
+
+⚠️ 有効化の条件
+
+`markAsReadToken` は **LINE公式アカウントマネージャーの「応答設定」でチャットがONの場合のみ** Webhookイベントに含まれます。OFFの場合はトークンが届かないため、既読処理はスキップされます（ログに `markAsReadToken is not available. Skipping mark as read.` が出力されます）。
+
+追加のスクリプトプロパティは不要で、既存の `LINE_CHANNEL_ACCESS_TOKEN` をそのまま使用します。
+
+---
+
 ## 🔑 注意事項
 - `.clasp.json`の`rootDir`は`dist`になっています
 - 設定値はすべてGoogle Apps Scriptのスクリプトプロパティで管理します
 - スクリプトプロパティの設定方法は上記「セットアップ手順」を参照してください
+
+### デプロイ時に認証エラーが出た場合
+
+`npm run deploy`が以下のエラーで失敗することがあります。
+
+```
+{"error":"invalid_grant","error_description":"reauth related error (invalid_rapt)"}
+```
+
+Googleが機微なスコープに対して定期的に再認証を要求するためで、`~/.clasprc.json`のトークンが失効した状態です。再ログインすれば解消します。
+
+```bash
+clasp login
+```
+
+解消しない場合は`clasp logout`で認証情報を破棄してから再度ログインしてください。
 
 ---
 

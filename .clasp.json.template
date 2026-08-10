@@ -1,0 +1,16 @@
+{
+  "scriptId": "GASプロジェクトのスクリプトID（Apps Scriptエディタの「プロジェクトの設定」から取得）",
+  "rootDir": "dist",
+  "scriptExtensions": [
+    ".js",
+    ".gs"
+  ],
+  "htmlExtensions": [
+    ".html"
+  ],
+  "jsonExtensions": [
+    ".json"
+  ],
+  "filePushOrder": [],
+  "skipSubdirectories": true
+}
