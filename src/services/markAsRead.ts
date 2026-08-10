@@ -4,7 +4,10 @@ import { CONFIG } from '../config';
 
 /**
  * LINEメッセージを既読にします
- * @param markAsReadToken Webhookイベントから取得したmarkAsReadToken
+ *
+ * LINE Official Account ManagerでChatがONの場合のみ、Webhookイベントの
+ * message内にmarkAsReadTokenが含まれます。OFFの場合は何もせずスキップします。
+ * @param markAsReadToken Webhookイベントのmessageから取得したmarkAsReadToken
  */
 export function markMessageAsRead(markAsReadToken: string | undefined): void {
   // markAsReadTokenが存在しない場合は処理をスキップ
@@ -29,11 +32,13 @@ export function markMessageAsRead(markAsReadToken: string | undefined): void {
     muteHttpExceptions: true,
   };
 
+  // muteHttpExceptionsによりHTTPエラーは例外にならないが、
+  // ネットワーク障害やタイムアウトはUrlFetchApp.fetchが例外を投げるためtry-catchで捕捉する
   try {
     const response = UrlFetchApp.fetch(url, options);
     const statusCode = response.getResponseCode();
 
-    if (statusCode === 200) {
+    if (statusCode >= 200 && statusCode < 300) {
       Logger.log('Message marked as read successfully.');
     } else {
       const errorBody = response.getContentText();

@@ -11,6 +11,7 @@ LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps S
 - メッセージフォーマットチェック
 - LINEへカジュアルな返信
 - 筋トレ記録のJSON書き出し対応
+- 受信メッセージの自動既読（Chatモード ON 時のみ）
 
 ## 📦 構成
 - TypeScript
@@ -30,7 +31,8 @@ LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps S
 │       ├─┐ reply.ts       # LINEへの返信処理
 │       ├─┐ user.ts        # ユーザー認証処理
 │       ├─┐ read.ts        # スプレッドシート読取専用処理
-│       └─┐ export.ts      # JSON書き出し処理
+│       ├─┐ export.ts      # JSON書き出し処理
+│       └─┐ markAsRead.ts  # 受信メッセージの自動既読処理
 ├─┐ dist/                  # ビルド後出力
 ├─┐ package.json
 ├─┐ tsconfig.json
@@ -170,6 +172,22 @@ LINEで json書き出し とメッセージを送ると、スプレッドシー�
 ]
 ```
 ※ トップセットは最重量＆最多Repのセットに "topSetFlag": 1 が付きます。
+
+---
+
+## 👀 自動既読機能
+許可ユーザーからメッセージを受信すると、[メッセージ既読API](https://developers.line.biz/ja/docs/messaging-api/mark-as-read/)を呼び出して自動的に既読を付けます。
+
+🔁 フロー
+1. Webhookイベントの `events[].message.markAsReadToken` を取得
+2. 許可ユーザーであることを確認
+3. `POST https://api.line.me/v2/bot/chat/markAsRead` にトークンを送信して既読化
+
+⚠️ 有効化の条件
+
+`markAsReadToken` は **LINE公式アカウントマネージャーの「応答設定」でチャットがONの場合のみ** Webhookイベントに含まれます。OFFの場合はトークンが届かないため、既読処理はスキップされます（ログに `markAsReadToken is not available. Skipping mark as read.` が出力されます）。
+
+追加のスクリプトプロパティは不要で、既存の `LINE_CHANNEL_ACCESS_TOKEN` をそのまま使用します。
 
 ---
 

@@ -31,14 +31,15 @@ function doPost(e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
         const replyToken = event.replyToken;
         const markAsReadToken = event.message.markAsReadToken;
 
-        // メッセージを既読にする（ChatモードがONの場合のみmarkAsReadTokenが提供される）
-        markMessageAsRead(markAsReadToken);
-
         if (!allowedUserIds.includes(userId)) {
           Logger.log(`Unauthorized user: ${userId}`);
           // 必要に応じて、ここでユーザーに返信することもできます
           return;
         }
+
+        // メッセージを既読にする（ChatモードがONの場合のみmarkAsReadTokenが提供される）
+        // 許可ユーザーのメッセージのみを既読にするため、認証チェックの後に実行する
+        markMessageAsRead(markAsReadToken);
 
         // (1) "json書き出し"コマンドの処理
         if (messageText === 'json書き出し') {
