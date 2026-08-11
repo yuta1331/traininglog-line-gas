@@ -133,9 +133,9 @@ Apps Scriptエディタで「デプロイ」→「デプロイを管理」から
 `master`・`develop`への push と、それらを対象とする Pull Request で GitHub Actions（`.github/workflows/ci.yml`）が動きます。
 
 1. `npm ci`
-2. `npm run typecheck`（`tsc --noEmit`）
+2. `npm run typecheck`（`tsc --noEmit -p tsconfig.typecheck.json`。`src/`・`test/`の両方が対象）
 3. `npm test`（vitest）
-4. `npm run build`
+4. `npm run build`（`tsconfig.json`。ビルド対象は`src/`のみ）
 
 Node のバージョンは `.nvmrc`（ローカル開発環境と同じ`22.15.0`）を参照します。
 
