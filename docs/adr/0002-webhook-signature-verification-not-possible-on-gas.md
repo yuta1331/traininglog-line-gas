@@ -26,4 +26,4 @@ Google Apps Script のウェブアプリの `doPost(e)` は、HTTPリクエス�
 
 ## 関連
 
-- 方式の決定は #32
+- 方式の決定は #32 → 上記の選択肢2を採用した（[ADR-0004](0004-webhook-token-and-rotation.md)）。**本 ADR の「ヘッダーが読めない」という事実は覆っていない**ため、ステータスは `Accepted` のまま据え置く
