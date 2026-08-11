@@ -14,6 +14,17 @@ export type TrainingLogRow = {
 
 
 /**
+ * トレーニング記録をJSONにしてDriveに保存し、ダウンロードURLを返します
+ * @returns 保存されたファイルの共有可能なURL
+ */
+export function exportRecordsToJsonFile(): string {
+  const records = loadTrainingRecords();
+  const jsonData = convertRecordsToJson(records);
+  return saveJsonToDrive(jsonData);
+}
+
+
+/**
  * スプレッドシートからトレーニング記録を読み込みます
  * @returns {TrainingLogRow[]} トレーニングログ記録の配列
  */
