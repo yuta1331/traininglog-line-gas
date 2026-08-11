@@ -92,13 +92,22 @@ export function parseTrainingLog(userId: string, message: string): TrainingRecor
       return { weight, reps };
     });
 
-    let topSetIndex = 0;
-    sets.forEach((set, idx) => {
+    // 0回のセットはトップセット候補から除外する。全セットが0回なら、トップセットは1つも立たない
+    let topSetIndex: number | null = null;
+    for (let idx = 0; idx < sets.length; idx++) {
+      const set = sets[idx];
+      if (set.reps <= 0) continue;
+
+      if (topSetIndex === null) {
+        topSetIndex = idx;
+        continue;
+      }
+
       const top = sets[topSetIndex];
       if (set.weight > top.weight || (set.weight === top.weight && set.reps > top.reps)) {
         topSetIndex = idx;
       }
-    });
+    }
 
     sets.forEach((set, idx) => {
       records.push({
