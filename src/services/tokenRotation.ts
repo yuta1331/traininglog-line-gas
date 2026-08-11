@@ -34,13 +34,27 @@ const TOKEN_PARAM_PATTERN = /([?&])t=([^&]*)/;
  * 文字列/正規表現で処理する。
  * @param url 解析対象のURL
  * @returns `t`の値（デコード済み）。`t`が無ければundefined
+ * @throws `t`の値が不正なパーセントエンコーディング（例: 手編集されたURLの`%zz`）で
+ *   decodeURIComponentが失敗した場合
  */
 export function extractTokenFromUrl(url: string): string | undefined {
   const match = url.match(TOKEN_PARAM_PATTERN);
   if (!match) {
     return undefined;
   }
-  return decodeURIComponent(match[2]);
+  try {
+    return decodeURIComponent(match[2]);
+  } catch {
+    // decodeURIComponentは不正なパーセントエンコーディング（例: 手編集されたURLの?t=%zz）に
+    // 対してURIErrorを投げる。これを捕捉して事由の分かるメッセージに変えるのは、
+    // ADR-0004の中止条件（active:false/endpoint未設定/URLにtが無い）を4つ目に
+    // 増やすものではない。新しい中止条件ではなく、既存のエラー経路（この関数の呼び出し元
+    // performRotationStepsから例外がそのまま伝播し、失敗通知メールに載る）のメッセージを
+    // 診断可能にするだけである。この関数はADR-0004の「登録URLが手動変更された可能性」を
+    // 扱うドリフト監査の入力（GETで取得した登録URL）を踏むため、生のURIErrorのままだと
+    // 事由の分からない暗号的なエラーとして失敗通知メールに残ってしまう。
+    throw new Error('URLのトークンをデコードできませんでした。');
+  }
 }
 
 /**
@@ -102,7 +116,10 @@ type WebhookEndpointResponse = {
  * 呼び出し前提としてscript lockは取得済みであること（呼び出し元のrunTokenRotationが担う）。
  * @param deps GASへの到達点
  * @throws 中止条件（active:false / endpoint未設定 / URLにtが無い）、
- *   GET/PUTの失敗、レスポンスのJSON解析失敗のいずれかで例外を投げる
+ *   GET/PUTの失敗、レスポンスのJSON解析失敗のいずれかで例外を投げる。
+ *   加えて、登録URLの`t`が不正なパーセントエンコーディングの場合も
+ *   extractTokenFromUrl内から例外が伝播する（中止条件の4つ目ではなく、
+ *   「URLにtが無い」と同じエラー経路のメッセージを診断可能にしたもの）
  */
 function performRotationSteps(deps: TokenRotationDeps): void {
   // 監査用に開始前のプロパティ値を保持しておく。値そのものは絶対にログへ書かない
@@ -180,7 +197,13 @@ function performRotationSteps(deps: TokenRotationDeps): void {
     // 刈り取り（手順7）をしない。プロパティは"C,N"のまま残し、次回の実行に委ねるのが
     // 安全側（ADR-0004）。ロールバックもしない。旧URLも新URLも同じデプロイを指すため
     // 到達性は1ビットも変わらず、効かない手当てになる。
-    throw new Error(`Webhook endpointの更新に失敗しました。status=${putResult.statusCode}`);
+    //
+    // bodyも含めておく（手順1のGET失敗時と同じ理由）。この理由はPUTにこそ強く当てはまる:
+    // LINEがURLを拒否した場合、拒否理由はPUTのレスポンスボディにしか出ないため、
+    // 失敗通知メール（唯一の検知経路）だけで原因を診断できるようにする。
+    throw new Error(
+      `Webhook endpointの更新に失敗しました。status=${putResult.statusCode}, body=${putResult.body}`,
+    );
   }
 
   // 手順7: このsleepはキャッシュ遅延に対する防御であり、疎通確認（webhook/test）の

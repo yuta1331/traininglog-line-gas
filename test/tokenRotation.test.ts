@@ -64,6 +64,12 @@ describe('extractTokenFromUrl', () => {
   it('URLエンコードされた値をデコードして返す', () => {
     expect(extractTokenFromUrl('https://example.com/exec?t=a%2Fb')).toBe('a/b');
   });
+
+  it('不正なパーセントエンコーディングは事由の分かるメッセージでthrowする（decodeURIComponentの生のURIErrorを外に出さない）', () => {
+    expect(() => extractTokenFromUrl('https://example.com/exec?t=%zz')).toThrow(
+      /デコードできません/,
+    );
+  });
 });
 
 describe('replaceTokenInUrl', () => {
@@ -132,6 +138,24 @@ describe('runTokenRotation', () => {
     // finallyでロックが解放されることの証明。throwを経由してもreleaseLockは必ず呼ばれる
     // （素朴なtry無しの直線的な実装だと、ここで呼ばれずロックが握られたままになる）
     expect(deps.releaseLock).toHaveBeenCalledTimes(1);
+  });
+
+  it('PUT失敗時のthrowメッセージにレスポンスボディを含む（LINEがURLを拒否した理由はPUTのレスポンスボディにしか出ないため、失敗通知メールだけで診断できるようにする）', () => {
+    const deps = makeDeps({
+      callLineApi: vi.fn((method: 'get' | 'put') => {
+        if (method === 'get') {
+          return okGetResult('https://example.com/exec?t=old-token');
+        }
+        return {
+          type: 'error',
+          statusCode: 400,
+          body: '{"message":"invalid webhook url"}',
+        } satisfies LineApiResult;
+      }),
+      generateToken: vi.fn(() => 'new-token'),
+    });
+
+    expect(() => runTokenRotation(deps)).toThrow(/invalid webhook url/);
   });
 
   it('active:falseなら中止してthrowし、プロパティを書き換えない', () => {

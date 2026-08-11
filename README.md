@@ -113,7 +113,7 @@ d. 以下の7つのプロパティを設定：
 | `LINE_CHANNEL_ACCESS_TOKEN` | LINEチャネルアクセストークン | `your_channel_access_token` |
 | `WEBHOOK_TOKEN` | Webhook URLのクエリパラメータ`t`に載せる送信元トークン（[ADR-0004](docs/adr/0004-webhook-token-and-rotation.md)）。カンマ区切りで複数指定可（通常時は1つ、ローテーション入れ替え中は2つ）。**未設定だとBotは動きません（fail-closed）** | `3fa85f64-5717-4562-b3fc-2c963f66afa6` |
 
-`WEBHOOK_TOKEN`の初期値は、`Utilities.getUuid()`の実行結果などランダムな文字列であれば何でも構いません。導入手順とローテーションの仕組みは後述の「🔐 送信元トークンと自動ローテーション」を参照してください。
+`WEBHOOK_TOKEN`の初期値は`Utilities.getUuid()`の実行結果を推奨します。⚠️ 照合処理（`src/services/webhookToken.ts`）はカンマ区切りで受付集合を作るため、**少なくともカンマを含む文字列は使えません**（トークンが分解されて照合が通らなくなり、fail-closedのためBotが全停止します）。導入手順とローテーションの仕組みは後述の「🔐 送信元トークンと自動ローテーション」を参照してください。
 
 6. **ビルド**
 
