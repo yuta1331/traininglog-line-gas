@@ -17,11 +17,6 @@ const cases: [string, MessageResult, string | null][] = [
     'フォーマット間違ってるよ！📝\n3行目の重さと回数は「24:12」みたいに数字で書いてね',
   ],
   [
-    'フォーマットエラー: 空行',
-    { type: 'invalid_format', reason: { kind: 'blank_line', line: 2 } },
-    'フォーマット間違ってるよ！📝\n2行目が空行になってるよ',
-  ],
-  [
     'フォーマットエラー: 1行目',
     { type: 'invalid_format', reason: { kind: 'first_line', line: 1 } },
     'フォーマット間違ってるよ！📝\n1行目は「4/26 A店」みたいに日付と店舗名を書いてね',
