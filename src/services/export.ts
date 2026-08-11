@@ -1,17 +1,8 @@
 // TypeScript: JSONエクスポートのためのサービス
 
 import { CONFIG } from '../config';
-
-export type TrainingLogRow = {
-  userId: string;
-  date: Date;
-  shop: string;
-  event: string;
-  weight: number;
-  reps: number;
-  topSet: boolean;
-};
-
+import { TrainingRecord } from './parse';
+import { loadTrainingRecords } from './trainingLogStore';
 
 /**
  * トレーニング記録をJSONにしてDriveに保存し、ダウンロードURLを返します
@@ -25,43 +16,11 @@ export function exportRecordsToJsonFile(): string {
 
 
 /**
- * スプレッドシートからトレーニング記録を読み込みます
- * @returns {TrainingLogRow[]} トレーニングログ記録の配列
- */
-export function loadTrainingRecords(): TrainingLogRow[] {
-  const sheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName(CONFIG.SHEET_NAME_LOG);
-  if (!sheet) {
-    throw new Error(`Sheet ${CONFIG.SHEET_NAME_LOG} not found.`);
-  }
-
-  const values = sheet.getDataRange().getValues();
-  if (values.length <= 1) {
-    // ヘッダーのみ存在する場合
-    return [];
-  }
-
-  const records: TrainingLogRow[] = values.slice(1).map(row => {
-    return {
-      userId: row[0],
-      date: new Date(row[1]),
-      shop: row[2],
-      event: row[3],
-      weight: Number(row[4]),
-      reps: Number(row[5]),
-      topSet: row[6] === 1,
-    };
-  });
-
-  return records;
-}
-
-
-/**
  * フラットなトレーニング記録を構造化されたJSON形式に変換します
- * @param records TrainingLogRowの配列
+ * @param records TrainingRecordの配列
  * @returns JSON形式の配列
  */
-export function convertRecordsToJson(records: TrainingLogRow[]): any[] {
+export function convertRecordsToJson(records: TrainingRecord[]): any[] {
   // 日付+店舗でグループ化するためのマップ
   const grouped: Record<string, { date: string; location: string; exercises: Record<string, { name: string; sets: { weight: number; reps: number; topSetFlag: number; }[] }> }> = {};
 

@@ -1,5 +1,23 @@
 // スクリプトプロパティから設定値を取得するヘルパー関数
 
+/** スクリプトプロパティ相当の値を返すport。テストでは固定値のportに差し替える（#35） */
+export type PropertiesPort = (key: string) => string | null;
+
+const scriptPropertiesPort: PropertiesPort = (key) =>
+  PropertiesService.getScriptProperties().getProperty(key);
+
+let propertiesPort: PropertiesPort = scriptPropertiesPort;
+
+/** テストからCONFIGの値を固定するためにportを差し替える */
+export function setPropertiesPort(port: PropertiesPort): void {
+  propertiesPort = port;
+}
+
+/** 本番用のScriptProperties portに戻す */
+export function resetPropertiesPort(): void {
+  propertiesPort = scriptPropertiesPort;
+}
+
 /**
  * スクリプトプロパティから指定されたキーの値を取得します
  * @param key スクリプトプロパティのキー
@@ -7,7 +25,7 @@
  * @throws キーが存在しない場合はエラーをスロー
  */
 function getScriptProperty(key: string): string {
-  const value = PropertiesService.getScriptProperties().getProperty(key);
+  const value = propertiesPort(key);
   if (!value) {
     throw new Error(`スクリプトプロパティ '${key}' が設定されていません。`);
   }

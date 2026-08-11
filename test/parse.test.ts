@@ -113,7 +113,7 @@ describe('parseTrainingLog', () => {
   });
 
   describe('現状の挙動として固定しておきたい端', () => {
-    it('種目行が1つも無いと空配列を返す（呼び出し側は0件保存で成功扱いにしている: #31）', () => {
+    it('種目行が1つも無いと空配列を返す（呼び出し側はno_recordsとして扱う: #31）', () => {
       expect(parseTrainingLog(USER, '4/26 A店')).toEqual([]);
     });
 
