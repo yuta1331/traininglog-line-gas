@@ -1,7 +1,7 @@
 // TypeScript: トレーニングログメッセージのパースと処理を行うサービス
 
 /** パースに失敗した理由の種別 */
-export type ParseErrorKind = 'first_line' | 'blank_line' | 'workout_line' | 'set_format';
+export type ParseErrorKind = 'first_line' | 'workout_line' | 'set_format';
 
 /** メッセージのどこがどう読めなかったかを持つエラー */
 export class ParseError extends Error {
@@ -76,8 +76,9 @@ export function parseTrainingLog(userId: string, message: string): TrainingRecor
     // 1行目が日付+店舗なので、種目行はユーザーから見て2行目から始まる
     const lineNumber = index + 2;
 
-    // 空行も現状どおりエラーにする（#36）。ただし種目行の不備とは区別する
-    if (line === '') throw new ParseError('blank_line', lineNumber);
+    // 空行はその位置のまま読み飛ばす（#36）。filterで除去すると後続行の行番号がずれるため、
+    // ここで早期returnしてindexは変えない
+    if (line === '') return;
 
     const [eventName, setsText] = line.split(/\s(.+)/);
     if (!setsText) throw new ParseError('workout_line', lineNumber);
