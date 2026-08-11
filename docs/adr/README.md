@@ -20,3 +20,4 @@
 
 - [ADR-0001](0001-doPost-thin-adapter.md) — `doPost` を薄い adapter にし、メッセージ処理を messageHandler と記録ストアに分ける
 - [ADR-0002](0002-webhook-signature-verification-not-possible-on-gas.md) — Webhook の署名検証は素の Google Apps Script では実装できない
+- [ADR-0003](0003-ci-only-no-cd.md) — CIのみ導入し、CDは当面入れない
