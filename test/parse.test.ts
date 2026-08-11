@@ -1,11 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { isTrainingRecord, parseTrainingLog } from '../src/services/parse';
+import { isTrainingRecord, ParseError, parseTrainingLog } from '../src/services/parse';
 
 // このファイルは特性テスト（characterization test）。
 // 「こうあるべき」ではなく「現在こう動いている」を固定するもので、
 // 挙動を変えるときは実装と一緒にここを更新する。
 
 const USER = 'U1234567890';
+
+/** パースに失敗することを前提に、投げられたParseErrorを取り出す */
+function parseErrorOf(message: string): ParseError {
+  try {
+    parseTrainingLog(USER, message);
+  } catch (error) {
+    if (error instanceof ParseError) return error;
+    throw error;
+  }
+  throw new Error('ParseErrorが投げられなかった');
+}
 
 beforeEach(() => {
   // parseTrainingLogは年の省略時に現在年を使う（parse.ts:48）ので時刻を固定する
@@ -107,9 +118,14 @@ describe('parseTrainingLog', () => {
     });
 
     it('本文中の空行はエラーになる（#36）', () => {
-      expect(() => parseTrainingLog(USER, '5/1 ジム\n\nスクワット 100:5')).toThrow(
-        'Invalid workout line format',
-      );
+      expect(() => parseTrainingLog(USER, '5/1 ジム\n\nスクワット 100:5')).toThrow(ParseError);
+    });
+
+    it('空行は読めない種目行とは別の種別として扱う', () => {
+      expect(parseErrorOf('5/1 ジム\nスクワット 100:5\n\nベンチ 60:10')).toMatchObject({
+        kind: 'blank_line',
+        line: 3,
+      });
     });
 
     it('存在しない日付は拒否されずロールオーバーする', () => {
@@ -121,22 +137,41 @@ describe('parseTrainingLog', () => {
   });
 
   describe('フォーマットエラー', () => {
-    it('種目名だけでセットが無い行を拒否する', () => {
-      expect(() => parseTrainingLog(USER, '4/26 A店\nスクワット')).toThrow(
-        'Invalid workout line format',
-      );
+    it('1行目が日付+店舗でなければ1行目の不備として拒否する', () => {
+      // isTrainingRecordが同じ正規表現で弾くため通常この経路には来ないが、
+      // parseTrainingLogを直接呼べば到達する
+      expect(parseErrorOf('おはよう\nスクワット 100:5')).toMatchObject({
+        kind: 'first_line',
+        line: 1,
+      });
     });
 
-    it('重量・回数が数値でない行を拒否する', () => {
-      expect(() => parseTrainingLog(USER, '4/26 A店\nスクワット 重い:たくさん')).toThrow(
-        'Invalid weight or reps format',
-      );
+    it('種目名だけでセットが無い行は、その行番号つきで拒否する', () => {
+      expect(parseErrorOf('4/26 A店\nスクワット')).toMatchObject({
+        kind: 'workout_line',
+        line: 2,
+      });
     });
 
-    it('コロンが無いセットを拒否する', () => {
-      expect(() => parseTrainingLog(USER, '4/26 A店\nスクワット 100')).toThrow(
-        'Invalid weight or reps format',
-      );
+    it('読めない種目行が下のほうにあってもその行を指す', () => {
+      expect(parseErrorOf('4/26 A店\nスクワット 100:5\nベンチ 60:10\nデッドリフト')).toMatchObject({
+        kind: 'workout_line',
+        line: 4,
+      });
+    });
+
+    it('重量・回数が数値でない行は、種目行の不備とは区別する', () => {
+      expect(parseErrorOf('4/26 A店\nスクワット 重い:たくさん')).toMatchObject({
+        kind: 'set_format',
+        line: 2,
+      });
+    });
+
+    it('コロンが無いセットも重量・回数の不備として扱う', () => {
+      expect(parseErrorOf('4/26 A店\nスクワット 100:5\nベンチ 60')).toMatchObject({
+        kind: 'set_format',
+        line: 3,
+      });
     });
   });
 });

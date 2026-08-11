@@ -5,7 +5,13 @@
 // LINEのWebhookペイロードの形は知らない（doPostが整形して渡す）。
 // LINEに返す文言も持たない（doPost側の文言化関数が担う）。
 
-import { isTrainingRecord, parseTrainingLog, TrainingRecord } from './parse';
+import {
+  isTrainingRecord,
+  ParseError,
+  ParseErrorKind,
+  parseTrainingLog,
+  TrainingRecord,
+} from './parse';
 import { StoreBusyError, StoreError } from './trainingLogStore';
 
 /** JSON書き出しを起動するコマンド */
@@ -18,10 +24,17 @@ export type MessageInput = {
   markAsReadToken?: string;
 };
 
+/** メッセージのどこが読めなかったか。文言は含まない */
+export type InvalidFormatReason = {
+  kind: ParseErrorKind;
+  /** ユーザーから見た行番号（1始まり） */
+  line: number;
+};
+
 /** 何が起きたかを表す。文言は含まない */
 export type MessageResult =
   | { type: 'saved' }
-  | { type: 'invalid_format'; detail?: string }
+  | { type: 'invalid_format'; reason: InvalidFormatReason }
   | { type: 'store_error' }
   | { type: 'unknown_error' }
   | { type: 'busy' }
@@ -97,10 +110,14 @@ function saveTrainingRecords(input: MessageInput, deps: MessageHandlerDeps): Mes
   try {
     records = parseTrainingLog(input.userId, input.text);
   } catch (error) {
-    return {
-      type: 'invalid_format',
-      detail: error instanceof Error ? error.message : undefined,
-    };
+    if (error instanceof ParseError) {
+      return { type: 'invalid_format', reason: { kind: error.kind, line: error.line } };
+    }
+
+    // パース由来と判別できない例外をフォーマットエラーとして返すと、
+    // 障害をユーザーの入力ミスと偽ることになる
+    logError('Unexpected error while parsing training log', error);
+    return { type: 'unknown_error' };
   }
 
   try {

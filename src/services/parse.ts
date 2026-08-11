@@ -1,5 +1,22 @@
 // TypeScript: トレーニングログメッセージのパースと処理を行うサービス
 
+/** パースに失敗した理由の種別 */
+export type ParseErrorKind = 'first_line' | 'blank_line' | 'workout_line' | 'set_format';
+
+/** メッセージのどこがどう読めなかったかを持つエラー */
+export class ParseError extends Error {
+  readonly kind: ParseErrorKind;
+  /** ユーザーから見た行番号（1始まり） */
+  readonly line: number;
+
+  constructor(kind: ParseErrorKind, line: number) {
+    super(`${kind} at line ${line}`);
+    this.name = 'ParseError';
+    this.kind = kind;
+    this.line = line;
+  }
+}
+
 /**
  * 単一のトレーニング記録を表すデータ構造
  */
@@ -38,7 +55,7 @@ export function parseTrainingLog(userId: string, message: string): TrainingRecor
 
   const dateShopMatch = dateShopLine.match(/^(\d{1,4}\/)?(\d{1,2})\/(\d{1,2})\s+(.+)$/);
   if (!dateShopMatch) {
-    throw new Error('Invalid first line format');
+    throw new ParseError('first_line', 1);
   }
 
   let year: number;
@@ -55,16 +72,22 @@ export function parseTrainingLog(userId: string, message: string): TrainingRecor
 
   const records: TrainingRecord[] = [];
 
-  workoutLines.forEach(line => {
+  workoutLines.forEach((line, index) => {
+    // 1行目が日付+店舗なので、種目行はユーザーから見て2行目から始まる
+    const lineNumber = index + 2;
+
+    // 空行も現状どおりエラーにする（#36）。ただし種目行の不備とは区別する
+    if (line === '') throw new ParseError('blank_line', lineNumber);
+
     const [eventName, setsText] = line.split(/\s(.+)/);
-    if (!setsText) throw new Error('Invalid workout line format');
+    if (!setsText) throw new ParseError('workout_line', lineNumber);
 
     const sets = setsText.split(',').map(pair => {
       const [weightStr, repsStr] = pair.split(':');
       const weight = parseFloat(weightStr);
       const reps = parseInt(repsStr, 10);
       if (isNaN(weight) || isNaN(reps)) {
-        throw new Error('Invalid weight or reps format');
+        throw new ParseError('set_format', lineNumber);
       }
       return { weight, reps };
     });

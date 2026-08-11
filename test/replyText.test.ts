@@ -6,11 +6,25 @@ import { MessageResult } from '../src/services/messageHandler';
 const cases: [string, MessageResult, string | null][] = [
   ['保存成功', { type: 'saved' }, '登録したよ！💪'],
   [
-    'フォーマットエラー',
-    { type: 'invalid_format', detail: 'Invalid workout line format' },
-    'フォーマット間違ってるよ！📝-> Invalid workout line format',
+    'フォーマットエラー: 種目行が読めない',
+    { type: 'invalid_format', reason: { kind: 'workout_line', line: 3 } },
+    'フォーマット間違ってるよ！📝\n3行目は「種目名 24:12,24:10」みたいに書いてね',
   ],
-  ['フォーマットエラー（詳細なし）', { type: 'invalid_format' }, 'フォーマット間違ってるよ！📝'],
+  [
+    'フォーマットエラー: 重量・回数が読めない',
+    { type: 'invalid_format', reason: { kind: 'set_format', line: 3 } },
+    'フォーマット間違ってるよ！📝\n3行目の重さと回数は「24:12」みたいに数字で書いてね',
+  ],
+  [
+    'フォーマットエラー: 空行',
+    { type: 'invalid_format', reason: { kind: 'blank_line', line: 2 } },
+    'フォーマット間違ってるよ！📝\n2行目が空行になってるよ',
+  ],
+  [
+    'フォーマットエラー: 1行目',
+    { type: 'invalid_format', reason: { kind: 'first_line', line: 1 } },
+    'フォーマット間違ってるよ！📝\n1行目は「4/26 A店」みたいに日付と店舗名を書いてね',
+  ],
   [
     '記録ストアの障害',
     { type: 'store_error' },

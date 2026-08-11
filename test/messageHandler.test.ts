@@ -98,8 +98,26 @@ describe('トレーニング記録の保存', () => {
 
     const result = handleTextMessage(message('4/26 A店\nスクワット'), deps);
 
-    expect(result).toEqual({ type: 'invalid_format', detail: 'Invalid workout line format' });
+    expect(result).toEqual({
+      type: 'invalid_format',
+      reason: { kind: 'workout_line', line: 2 },
+    });
     expect(deps.appendTrainingRecords).not.toHaveBeenCalled();
+  });
+
+  it('パース以外の例外はフォーマットエラーとして返さない', () => {
+    // isTrainingRecordを通り、かつparseTrainingLogがParseError以外を投げる入力は
+    // 現状作れないため、ここでは保存段の例外で代表させる
+    const deps = makeDeps({
+      appendTrainingRecords: vi.fn(() => {
+        throw new TypeError('Cannot read properties of undefined');
+      }),
+    });
+
+    const result = handleTextMessage(message('4/26 A店\nスクワット 100:5'), deps);
+
+    expect(result).toEqual({ type: 'unknown_error' });
+    expect(deps.appendTrainingRecords).toHaveBeenCalledTimes(1);
   });
 
   it('記録ストアの障害はinvalid_formatと区別する', () => {
