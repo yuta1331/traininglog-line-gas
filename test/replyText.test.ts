@@ -12,9 +12,14 @@ const cases: [string, MessageResult, string | null][] = [
   ],
   ['フォーマットエラー（詳細なし）', { type: 'invalid_format' }, 'フォーマット間違ってるよ！📝'],
   [
-    '記録ストアの障害（現状はフォーマットエラーと同じ文言。コミット3で分離する）',
-    { type: 'store_error', detail: 'Sheet TrainingLog not found.' },
-    'フォーマット間違ってるよ！📝-> Sheet TrainingLog not found.',
+    '記録ストアの障害',
+    { type: 'store_error' },
+    '⚠️ 保存に失敗したよ…ちょっと待ってもう一度送ってみて！',
+  ],
+  [
+    '想定外のエラー（記録ストアの障害と同じ文言）',
+    { type: 'unknown_error' },
+    '⚠️ 保存に失敗したよ…ちょっと待ってもう一度送ってみて！',
   ],
   ['混雑', { type: 'busy' }, '⏱️ 処理が混み合っています。しばらく待ってから再度お試しください。'],
   [
@@ -24,10 +29,9 @@ const cases: [string, MessageResult, string | null][] = [
   ],
   [
     'JSON書き出し失敗',
-    { type: 'export_failed', detail: 'No item with the given ID could be found' },
-    '❌ エクスポート失敗: No item with the given ID could be found',
+    { type: 'export_failed' },
+    '❌ エクスポート失敗…ちょっと待ってもう一度試してみて！',
   ],
-  ['JSON書き出し失敗（詳細なし）', { type: 'export_failed' }, '❌ エクスポート失敗: Unknown error'],
   ['許可されていないユーザー', { type: 'unauthorized' }, null],
   ['記録でない通常メッセージ', { type: 'ignored' }, null],
 ];

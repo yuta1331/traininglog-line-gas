@@ -22,12 +22,13 @@ export type MessageInput = {
 export type MessageResult =
   | { type: 'saved' }
   | { type: 'invalid_format'; detail?: string }
-  | { type: 'store_error'; detail: string }
+  | { type: 'store_error' }
+  | { type: 'unknown_error' }
   | { type: 'busy' }
   | { type: 'unauthorized' }
   | { type: 'ignored' }
   | { type: 'export_ok'; url: string }
-  | { type: 'export_failed'; detail?: string };
+  | { type: 'export_failed' };
 
 export type MessageHandlerDeps = {
   allowedUserIds: string[];
@@ -70,19 +71,39 @@ function exportToJson(deps: MessageHandlerDeps): MessageResult {
   try {
     return { type: 'export_ok', url: deps.exportJson() };
   } catch (error) {
-    if (error instanceof Error) {
-      Logger.log(`Error during JSON export: ${error.message}`);
-      return { type: 'export_failed', detail: error.message };
-    }
-    Logger.log('Unknown error during JSON export');
+    logError('Error during JSON export', error);
     return { type: 'export_failed' };
   }
 }
 
-function saveTrainingRecords(input: MessageInput, deps: MessageHandlerDeps): MessageResult {
-  try {
-    const records = parseTrainingLog(input.userId, input.text);
+/**
+ * 障害の詳細をログに残します
+ *
+ * 障害の詳細はユーザーに返さないため、ログが唯一の手がかりになります。
+ * 障害を表す処理結果を返す経路では必ず呼んでください。
+ */
+function logError(context: string, error: unknown): void {
+  if (error instanceof Error) {
+    Logger.log(`${context}: ${error.message}\n${error.stack ?? '(no stack)'}`);
+    return;
+  }
+  Logger.log(`${context}: ${String(error)}`);
+}
 
+function saveTrainingRecords(input: MessageInput, deps: MessageHandlerDeps): MessageResult {
+  // パース段と保存段でtryを分ける。まとめると保存側の障害が
+  // フォーマットエラーとして返ってしまう
+  let records: TrainingRecord[];
+  try {
+    records = parseTrainingLog(input.userId, input.text);
+  } catch (error) {
+    return {
+      type: 'invalid_format',
+      detail: error instanceof Error ? error.message : undefined,
+    };
+  }
+
+  try {
     // 種目行が1つも無いと空配列になるが、現状はそれでも成功として返す（#31）
     if (records.length > 0) {
       deps.appendTrainingRecords(records);
@@ -95,11 +116,13 @@ function saveTrainingRecords(input: MessageInput, deps: MessageHandlerDeps): Mes
       return { type: 'busy' };
     }
     if (error instanceof StoreError) {
-      return { type: 'store_error', detail: error.message };
+      logError('Failed to append training records', error);
+      return { type: 'store_error' };
     }
-    return {
-      type: 'invalid_format',
-      detail: error instanceof Error ? error.message : undefined,
-    };
+
+    // 保存中の想定外の例外をフォーマットエラーとして返すと、
+    // 障害をユーザーの入力ミスと偽ることになる
+    logError('Unexpected error while saving training records', error);
+    return { type: 'unknown_error' };
   }
 }

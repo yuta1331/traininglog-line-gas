@@ -5,6 +5,7 @@ import {
   MessageInput,
 } from '../src/services/messageHandler';
 import { StoreBusyError, StoreError } from '../src/services/trainingLogStore';
+import { takeLogs } from './setup';
 
 const ALLOWED = 'U-allowed';
 const DENIED = 'U-denied';
@@ -110,7 +111,7 @@ describe('トレーニング記録の保存', () => {
 
     const result = handleTextMessage(message('4/26 A店\nスクワット 100:5'), deps);
 
-    expect(result).toEqual({ type: 'store_error', detail: 'Sheet TrainingLog not found.' });
+    expect(result).toEqual({ type: 'store_error' });
   });
 
   it('ロックを取れなければbusyを返す', () => {
@@ -125,7 +126,7 @@ describe('トレーニング記録の保存', () => {
     expect(result).toEqual({ type: 'busy' });
   });
 
-  it('想定外の例外は現状invalid_formatに落ちる（コミット3で分離する）', () => {
+  it('保存中の想定外の例外はフォーマットエラーではなくunknown_errorにする', () => {
     const deps = makeDeps({
       appendTrainingRecords: vi.fn(() => {
         throw new Error('Service Spreadsheets failed while accessing document');
@@ -134,10 +135,19 @@ describe('トレーニング記録の保存', () => {
 
     const result = handleTextMessage(message('4/26 A店\nスクワット 100:5'), deps);
 
-    expect(result).toEqual({
-      type: 'invalid_format',
-      detail: 'Service Spreadsheets failed while accessing document',
+    expect(result).toEqual({ type: 'unknown_error' });
+  });
+
+  it('障害の詳細はユーザーに返さずログに残す', () => {
+    const deps = makeDeps({
+      appendTrainingRecords: vi.fn(() => {
+        throw new StoreError('Sheet TrainingLog not found.');
+      }),
     });
+
+    handleTextMessage(message('4/26 A店\nスクワット 100:5'), deps);
+
+    expect(takeLogs().join('\n')).toContain('Sheet TrainingLog not found.');
   });
 });
 
@@ -160,13 +170,11 @@ describe('JSON書き出し', () => {
 
     const result = handleTextMessage(message('json書き出し'), deps);
 
-    expect(result).toEqual({
-      type: 'export_failed',
-      detail: 'No item with the given ID could be found',
-    });
+    expect(result).toEqual({ type: 'export_failed' });
+    expect(takeLogs().join('\n')).toContain('No item with the given ID could be found');
   });
 
-  it('Error以外が投げられた場合はdetailを持たない', () => {
+  it('Error以外が投げられても落ちない', () => {
     const deps = makeDeps({
       exportJson: vi.fn(() => {
         throw 'boom';
@@ -176,6 +184,7 @@ describe('JSON書き出し', () => {
     const result = handleTextMessage(message('json書き出し'), deps);
 
     expect(result).toEqual({ type: 'export_failed' });
+    expect(takeLogs().join('\n')).toContain('boom');
   });
 
   it('許可されていないユーザーは書き出しできない', () => {

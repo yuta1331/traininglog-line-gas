@@ -15,13 +15,16 @@ export function toReplyText(result: MessageResult): string | null {
     case 'saved':
       return '登録したよ！💪';
 
-    // TODO: 記録ストアの障害をフォーマットエラーとして返すのは現状のバグ。
-    // 構造変更の差分を挙動変更と混ぜないため、ここでは現状の文言を保存している
     case 'invalid_format':
-    case 'store_error':
       return result.detail
         ? `フォーマット間違ってるよ！📝-> ${result.detail}`
         : 'フォーマット間違ってるよ！📝';
+
+    // 保存に失敗したことだけを伝える。原因の区別はユーザーには意味が無いので
+    // 処理結果の粒度と文言の粒度を一致させない（詳細はログに出している）
+    case 'store_error':
+    case 'unknown_error':
+      return '⚠️ 保存に失敗したよ…ちょっと待ってもう一度送ってみて！';
 
     case 'busy':
       return '⏱️ 処理が混み合っています。しばらく待ってから再度お試しください。';
@@ -30,7 +33,7 @@ export function toReplyText(result: MessageResult): string | null {
       return `✅ Jsonファイルを作成しました！\nこちらからダウンロードできます👇\n${result.url}`;
 
     case 'export_failed':
-      return `❌ エクスポート失敗: ${result.detail ?? 'Unknown error'}`;
+      return '❌ エクスポート失敗…ちょっと待ってもう一度試してみて！';
 
     // 許可されていないユーザーと、記録でない通常メッセージには返信しない
     case 'unauthorized':
