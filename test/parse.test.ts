@@ -124,20 +124,33 @@ describe('parseTrainingLog', () => {
     });
   });
 
+  describe('空行', () => {
+    it('本文中の空行は読み飛ばして処理を続ける（#36）', () => {
+      const records = parseTrainingLog(USER, '5/1 ジム\n\nスクワット 100:5');
+
+      expect(records).toHaveLength(1);
+      expect(records[0]).toEqual({
+        userId: USER,
+        date: new Date('2026/5/1'),
+        shop: 'ジム',
+        event: 'スクワット',
+        weight: 100,
+        reps: 5,
+        topSet: true,
+      });
+    });
+
+    it('空行があっても、後続の種目行のエラーは見た目どおりの行番号を指す', () => {
+      expect(parseErrorOf('5/1 ジム\nスクワット 100:5\n\nデッドリフト')).toMatchObject({
+        kind: 'workout_line',
+        line: 4,
+      });
+    });
+  });
+
   describe('現状の挙動として固定しておきたい端', () => {
     it('種目行が1つも無いと空配列を返す（呼び出し側はno_recordsとして扱う: #31）', () => {
       expect(parseTrainingLog(USER, '4/26 A店')).toEqual([]);
-    });
-
-    it('本文中の空行はエラーになる（#36）', () => {
-      expect(() => parseTrainingLog(USER, '5/1 ジム\n\nスクワット 100:5')).toThrow(ParseError);
-    });
-
-    it('空行は読めない種目行とは別の種別として扱う', () => {
-      expect(parseErrorOf('5/1 ジム\nスクワット 100:5\n\nベンチ 60:10')).toMatchObject({
-        kind: 'blank_line',
-        line: 3,
-      });
     });
 
     it('存在しない日付は拒否されずロールオーバーする', () => {

@@ -48,8 +48,6 @@ function invalidFormatHint(reason: InvalidFormatReason): string {
   switch (reason.kind) {
     case 'first_line':
       return `${reason.line}行目は「4/26 A店」みたいに日付と店舗名を書いてね`;
-    case 'blank_line':
-      return `${reason.line}行目が空行になってるよ`;
     case 'workout_line':
       return `${reason.line}行目は「種目名 24:12,24:10」みたいに書いてね`;
     case 'set_format':
