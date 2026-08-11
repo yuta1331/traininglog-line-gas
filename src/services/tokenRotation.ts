@@ -187,6 +187,15 @@ function performRotationSteps(deps: TokenRotationDeps): void {
   // 付属物ではない。ADR-0004により疎通確認は削除済みだが、それを理由に
   // 「確認が無いからsleepも不要」として将来ここを消さないこと。LINEのドキュメントは
   // 反映まで最大1分としているが保証ではないため、倍の120秒を取っている。
+  //
+  // なお、このsleepの間もscript lockは握られたままである。GASのscript lockは
+  // プロジェクトに1つしかなく、記録ストア（trainingLogStore.ts）も同じ
+  // LockService.getScriptLock()を使うため、この約2分の間に届いたメッセージは
+  // 記録の追記でロック待ちになり、30秒（trainingLogStoreのLOCK_TIMEOUT_MS）で
+  // StoreBusyErrorになる。ユーザーには「処理が混み合っています」と返って再送できるため
+  // 喪失にはならない。月1回・深夜帯（JST 3時）であることと併せて許容している。
+  // ロックを一旦解放して取り直す形にはしないこと。ローテーションが同時に2つ走らない
+  // という、このロックの存在理由そのものを弱めるため。
   deps.sleep(CACHE_PROPAGATION_WAIT_MS);
 
   // 刈り取り。ここでようやくCを受付集合から外す
