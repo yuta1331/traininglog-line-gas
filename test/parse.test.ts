@@ -110,6 +110,18 @@ describe('parseTrainingLog', () => {
 
       expect(records.map((r) => r.topSet)).toEqual([false, true, true, false]);
     });
+
+    it('0回のセットは最重量でもトップセットにしない', () => {
+      const records = parseTrainingLog(USER, '4/26 A店\nベンチプレス 100:0,90:2,85:5');
+
+      expect(records.map((r) => r.topSet)).toEqual([false, true, false]);
+    });
+
+    it('全セットが0回なら、種目行にトップセットは1つも立たない', () => {
+      const records = parseTrainingLog(USER, '4/26 A店\nベンチプレス 100:0,90:0');
+
+      expect(records.map((r) => r.topSet)).toEqual([false, false]);
+    });
   });
 
   describe('現状の挙動として固定しておきたい端', () => {
