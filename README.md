@@ -128,6 +128,23 @@ Apps Scriptエディタで「デプロイ」→「デプロイを管理」から
 
 ---
 
+## ✅ CI
+
+`master`・`develop`への push と、それらを対象とする Pull Request で GitHub Actions（`.github/workflows/ci.yml`）が動きます。
+
+1. `npm ci`
+2. `npm run typecheck`（`tsc --noEmit`）
+3. `npm test`（vitest）
+4. `npm run build`
+
+Node のバージョンは `.nvmrc`（ローカル開発環境と同じ`22.15.0`）を参照します。
+
+デプロイ（`npm run deploy` / `clasp push`）はCIに含まれません。ローカルから手動で行う運用のままです（理由は[ADR-0003](docs/adr/0003-ci-only-no-cd.md)）。
+
+CIが落ちている状態でのマージを防ぎたい場合は、GitHubリポジトリの Settings → Branches で `master`・`develop` に対して「Require status checks to pass before merging」を設定してください（この設定自体はリポジトリ管理者が行う必要があります）。
+
+---
+
 ## 📝 メッセージフォーマット例
 
 ```
