@@ -84,12 +84,12 @@ describe('トレーニング記録の保存', () => {
     expect(records[0]).toMatchObject({ userId: ALLOWED, shop: 'A店', event: 'スクワット', topSet: true });
   });
 
-  it('種目行が無いと記録ストアを呼ばないのに成功として返す（現状の挙動: #31）', () => {
+  it('種目行が無いと記録ストアを呼ばずno_recordsを返す（#31）', () => {
     const deps = makeDeps();
 
     const result = handleTextMessage(message('4/26 A店'), deps);
 
-    expect(result).toEqual({ type: 'saved' });
+    expect(result).toEqual({ type: 'no_records' });
     expect(deps.appendTrainingRecords).not.toHaveBeenCalled();
   });
 

@@ -15,6 +15,9 @@ export function toReplyText(result: MessageResult): string | null {
     case 'saved':
       return '登録したよ！💪';
 
+    case 'no_records':
+      return '登録する記録が無かったよ📝';
+
     case 'invalid_format':
       return `フォーマット間違ってるよ！📝\n${invalidFormatHint(result.reason)}`;
 

@@ -5,6 +5,7 @@ import { MessageResult } from '../src/services/messageHandler';
 // 処理結果と文言の対応表。文言を変えるときはここが唯一の変更点になる。
 const cases: [string, MessageResult, string | null][] = [
   ['保存成功', { type: 'saved' }, '登録したよ！💪'],
+  ['種目行が1つも無い', { type: 'no_records' }, '登録する記録が無かったよ📝'],
   [
     'フォーマットエラー: 種目行が読めない',
     { type: 'invalid_format', reason: { kind: 'workout_line', line: 3 } },
