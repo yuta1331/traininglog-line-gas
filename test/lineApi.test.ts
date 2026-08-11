@@ -1,23 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { resetPropertiesPort, setPropertiesPort } from '../src/config';
 import { postToLine } from '../src/services/lineApi';
 import { takeLogs } from './setup';
 
-// postToLineが直接触るGASグローバル（UrlFetchApp）と、CONFIG経由で間接的に触る
-// PropertiesServiceは、このファイル内だけでスタブする（setup.tsには足さない）。
-function stubProperties(): void {
-  (globalThis as any).PropertiesService = {
-    getScriptProperties: () => ({
-      getProperty: (key: string) => (key === 'LINE_CHANNEL_ACCESS_TOKEN' ? 'test-token' : null),
-    }),
-  };
-}
-
+// postToLineが直接触るGASグローバルはUrlFetchAppのみ（このファイル内だけでスタブする）。
+// CONFIG経由で間接的に触るPropertiesServiceは、config.tsのport差し替えで解決する（#35）。
 beforeEach(() => {
-  stubProperties();
+  setPropertiesPort((key) => (key === 'LINE_CHANNEL_ACCESS_TOKEN' ? 'test-token' : null));
 });
 
 afterEach(() => {
-  delete (globalThis as any).PropertiesService;
+  resetPropertiesPort();
   delete (globalThis as any).UrlFetchApp;
 });
 
