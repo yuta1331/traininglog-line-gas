@@ -21,7 +21,7 @@
 
 ### 付随して決めたこと
 
-- **`(globalThis as any).doPost = doPost` はエントリファイル（`src/index.ts`）に残す。** gas-webpack-plugin はエントリで検出したグローバル代入からトップレベルの関数スタブを生成する。代入を別 module に移すとスタブが生成されず、デプロイ後に `doPost` が見つからない。
+- **`(globalThis as any).doPost = doPost` はエントリファイル（`src/index.ts`）に残す。** ビルド後の `dist/index.js` では、この実行時の代入だけが `doPost` を公開している。gas-webpack-plugin（gas-entry-generator）が検出するのは `global.x = ...` の形だけで（`node_modules/gas-entry-generator/index.js:182`）、`globalThis` への代入からはトップレベルのスタブが生成されないため、代替経路が存在しない。この改修ではビルド出力の形状を master と同一に保つことを制約とし、`global` への書き換えでプラグインを働かせる選択肢は採らなかった。
 - **`LockService` は記録ストアの内側に置き、`getLastRow`+`setValues` だけを囲む。** ネットワークI/Oを排他に含めると全 Webhook 処理が直列化する。
 - **許可ユーザーの読み込みは `doPost` でリクエストあたり1回。** 判定と順序制約はハンドラ内だが、ロードを1件ごとに行うと複数イベントのバッチで UserList シートを N 回読むことになる。
 - **イベント処理が失敗しても常に 200 を返す。** LINE の再送は Webhook 配信全体を再送するため、非2xx を返すと成功済みイベントが再処理され、重複排除を持たない現状では行が二重化する。
