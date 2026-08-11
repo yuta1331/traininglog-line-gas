@@ -24,22 +24,27 @@ LINEから筋トレ記録をスプレッドシートに登録するGoogle Apps S
 ```
 .
 ├─┐ src/
-│   ├─┐ appsscript.json    # GASマニフェスト（ビルド時にdist/へコピー）
-│   ├─┐ config.ts          # スクリプトプロパティ取得ヘルパー
-│   ├─┐ index.ts           # doPostエントリポイント
+│   ├─┐ appsscript.json         # GASマニフェスト（ビルド時にdist/へコピー）
+│   ├─┐ config.ts               # スクリプトプロパティ取得ヘルパー（PropertiesServiceへの唯一の到達点）
+│   ├─┐ index.ts                # doPostエントリポイント（HTTPの出入りだけを担う）
+│   ├─┐ replyText.ts            # 処理結果をLINEへの返信文言に変換
 │   └─┐ services/
-│       ├─┐ parse.ts       # 筋トレメッセージのパース
-│       ├─┐ reply.ts       # LINEへの返信処理
-│       ├─┐ user.ts        # ユーザー認証処理
-│       ├─┐ read.ts        # スプレッドシート読取専用処理
-│       ├─┐ export.ts      # JSON書き出し処理
-│       └─┐ markAsRead.ts  # 受信メッセージの自動既読処理
-├─┐ dist/                  # ビルド後出力（.gitignore対象）
+│       ├─┐ parse.ts            # 筋トレメッセージのパース
+│       ├─┐ messageHandler.ts   # メッセージ1通の処理フロー
+│       ├─┐ trainingLogStore.ts # トレーニング記録の行スキーマ・記録ストアへの読み書き
+│       ├─┐ export.ts           # JSON書き出し処理
+│       ├─┐ user.ts             # ユーザー認証処理
+│       ├─┐ lineApi.ts          # LINE Messaging APIへのPOSTを担うadapter
+│       ├─┐ reply.ts            # LINEへの返信処理（lineApi経由）
+│       └─┐ markAsRead.ts       # 受信メッセージの自動既読処理（lineApi経由）
+├─┐ test/                       # vitestのテスト
+├─┐ dist/                       # ビルド後出力（.gitignore対象）
 ├─┐ package.json
-├─┐ tsconfig.json
+├─┐ tsconfig.json               # ビルド用（src/のみ）
+├─┐ tsconfig.typecheck.json     # 型チェック用（src/・test/の両方）
 ├─┐ webpack.config.js
-├─┐ .clasp.json.template   # GAS連携設定のひな形（Git管理）
-└─┐ .clasp.json            # GAS連携設定（.gitignore対象・各自で作成）
+├─┐ .clasp.json.template        # GAS連携設定のひな形（Git管理）
+└─┐ .clasp.json                 # GAS連携設定（.gitignore対象・各自で作成）
 ```
 
 ## .gitignoreしているファイル
@@ -133,9 +138,9 @@ Apps Scriptエディタで「デプロイ」→「デプロイを管理」から
 `master`・`develop`への push と、それらを対象とする Pull Request で GitHub Actions（`.github/workflows/ci.yml`）が動きます。
 
 1. `npm ci`
-2. `npm run typecheck`（`tsc --noEmit`）
+2. `npm run typecheck`（`tsc --noEmit -p tsconfig.typecheck.json`。`src/`・`test/`の両方が対象）
 3. `npm test`（vitest）
-4. `npm run build`
+4. `npm run build`（`tsconfig.json`。ビルド対象は`src/`のみ）
 
 Node のバージョンは `.nvmrc`（ローカル開発環境と同じ`22.15.0`）を参照します。
 

@@ -8,7 +8,7 @@
     "deploy": "npm run build && clasp push",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
   },
   "devDependencies": {
     "@types/google-apps-script": "^2.0.7",

@@ -34,6 +34,7 @@ export type InvalidFormatReason = {
 /** 何が起きたかを表す。文言は含まない */
 export type MessageResult =
   | { type: 'saved' }
+  | { type: 'no_records' }
   | { type: 'invalid_format'; reason: InvalidFormatReason }
   | { type: 'store_error' }
   | { type: 'unknown_error' }
@@ -120,11 +121,12 @@ function saveTrainingRecords(input: MessageInput, deps: MessageHandlerDeps): Mes
     return { type: 'unknown_error' };
   }
 
+  if (records.length === 0) {
+    return { type: 'no_records' };
+  }
+
   try {
-    // 種目行が1つも無いと空配列になるが、現状はそれでも成功として返す（#31）
-    if (records.length > 0) {
-      deps.appendTrainingRecords(records);
-    }
+    deps.appendTrainingRecords(records);
 
     return { type: 'saved' };
   } catch (error) {
