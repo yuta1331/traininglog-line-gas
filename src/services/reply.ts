@@ -1,6 +1,6 @@
 // LINEユーザーへの返信を行うサービス
 
-import { postToLine } from './lineApi';
+import { callLineApi } from './lineApi';
 
 /**
  * LINEユーザーに返信します
@@ -18,5 +18,5 @@ export function replyToUser(replyToken: string, message: string): void {
     ],
   };
 
-  postToLine('/v2/bot/message/reply', payload, 'Reply to user');
+  callLineApi('post', '/v2/bot/message/reply', payload, 'Reply to user');
 }
