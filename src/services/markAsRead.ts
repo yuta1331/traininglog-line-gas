@@ -1,6 +1,6 @@
 // メッセージを既読にするサービス
 
-import { postToLine } from './lineApi';
+import { callLineApi } from './lineApi';
 
 /**
  * LINEメッセージを既読にします
@@ -16,5 +16,5 @@ export function markMessageAsRead(markAsReadToken: string | undefined): void {
     return;
   }
 
-  postToLine('/v2/bot/chat/markAsRead', { markAsReadToken }, 'Mark message as read');
+  callLineApi('post', '/v2/bot/chat/markAsRead', { markAsReadToken }, 'Mark message as read');
 }

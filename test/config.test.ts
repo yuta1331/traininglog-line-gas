@@ -27,4 +27,10 @@ describe('CONFIG', () => {
 
     expect(() => CONFIG.SPREADSHEET_ID).toThrow(/SPREADSHEET_ID/);
   });
+
+  it('WEBHOOK_TOKEN未設定はエラーを投げる（fail-closed: ADR-0004）', () => {
+    setPropertiesPort(() => null);
+
+    expect(() => CONFIG.WEBHOOK_TOKEN).toThrow(/WEBHOOK_TOKEN/);
+  });
 });
