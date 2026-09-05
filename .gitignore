@@ -11,3 +11,11 @@ node_modules/
 .DS_Store
 .idea/
 .vscode/
+
+# secrets: 実 .env はコミット禁止(.env.example のみ可)
+.env
+.env.*
+*.env
+*.env.*
+!.env.example
+!*.env.example
